@@ -56,7 +56,14 @@ uploadArchives {
   repositories {
     mavenDeployer {
       configuration = configurations.deployerJars
-      repository(url: "scp://mvn.ardverk.org/repository/release")
+      repository(url: "scp://mvn.ardverk.org/repository/release") {
+        authentication(
+          userName: System.properties['ardverk.userName'],
+          privateKey: new File(System.properties['ardverk.privateKey']).absolutePath,
+          passphrase: System.properties['ardverk.passphrase']
+        )
+      }
+      
       snapshotRepository(url: "scp://mvn.ardverk.org/repository/snapshot")
     }
   }
