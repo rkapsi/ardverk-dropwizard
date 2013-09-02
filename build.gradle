@@ -1,0 +1,75 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'release'
+
+// UTF-8 should be standard by now. So use it!
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+  
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+group = 'org.ardverk.dropwizard'
+
+repositories {
+  mavenCentral()
+  mavenLocal()
+}
+
+configurations {
+  provided
+  deployerJars
+}
+
+sourceSets {
+  main.compileClasspath += configurations.provided
+  test.compileClasspath += configurations.provided
+  test.runtimeClasspath += configurations.provided
+}
+  
+// Add the provided JARs to Eclipse's classpath
+eclipse.classpath.plusConfigurations += configurations.provided
+
+dependencies {
+  compile "commons-codec:commons-codec:1.8"
+  compile "org.apache.commons:commons-lang3:3.1"
+  provided "com.yammer.dropwizard:dropwizard-core:0.6.2"
+  
+  deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
+}
+
+test {
+  useTestNG()
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      configuration = configurations.deployerJars
+      repository(url: "scp://mvn.ardverk.org/repository/release")
+      snapshotRepository(url: "scp://mvn.ardverk.org/repository/snapshot")
+    }
+  }
+}
+
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url "https://oss.sonatype.org/content/groups/public"}
+  }
+  dependencies {
+    classpath 'com.github.townsfolk:gradle-release:1.2'
+  }
+}
+
+createReleaseTag.dependsOn ":uploadArchives"
